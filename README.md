@@ -1,2 +1,2 @@
-# ansible
-projetos e estudos com ansible
+# Ansible
+projetos e estudos de automações utilizando Ansible.
