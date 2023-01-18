@@ -1,5 +1,5 @@
 ---
-- name: Adicionar Ipv6 de acesso
+- name: Alterando de Ifupdown para Networkd
   hosts: servers
   remote_user: root
 
