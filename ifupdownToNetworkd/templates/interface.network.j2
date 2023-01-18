@@ -1,0 +1,23 @@
+[Match]
+Name={{ ansible_default_ipv4.interface }}
+
+{% if inet4_type.stdout_lines[0] == "dhcp" %}
+[Network]
+DHCP=yes
+
+{% if ansible_default_ipv6 is defined and inet6_type.stdout_lines[0] == "static" %}
+Address={{ ansible_default_ipv6.address }}/{{ ansible_default_ipv6.prefix }}
+Gateway={{ ansible_default_ipv6.gateway }}
+{% endif %}
+
+{% elif inet4_type.stdout_lines[0]== "static" %}
+[Network]
+Address={{ ansible_default_ipv4.address }}/{{ ansible_default_ipv4.prefix }}
+Gateway={{ ansible_default_ipv4.gateway }}
+
+{% if ansible_default_ipv6 is defined and inet6_type.stdout_lines[0] == "static" %}
+Address={{ ansible_default_ipv6.address }}/{{ ansible_default_ipv6.prefix }}
+Gateway={{ ansible_default_ipv6.gateway }}
+{% endif %}
+
+{% endif %}

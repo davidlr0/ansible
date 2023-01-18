@@ -1,0 +1,58 @@
+---
+- name: Adicionar Ipv6 de acesso
+  hosts: servers
+  remote_user: root
+
+  tasks:
+    - name: Conferindo se o arquivo interfaces existe
+      stat:
+        path: /etc/network/interfaces
+      register: net_interfaces
+
+    - name: Identificando tipo de configuração IPv4
+      shell: grep -Po '(?<={{ ansible_default_ipv4.interface }}\sinet\s)(.*)' /etc/network/interfaces
+      register: inet4_type
+      when: net_interfaces.stat.exists == True
+    
+    # Ainda usando ansible_default_ipv4, para caso nao tenha ipv6
+    - name: Identificando tipo de configuração IPv6
+      shell: grep -Po '(?<={{ ansible_default_ipv4.interface }}\sinet6\s)(.*)' /etc/network/interfaces
+      register: inet6_type
+      when: net_interfaces.stat.exists == True
+
+    - name: Conferindo se o arquivo resolv.conf existe
+      stat:
+        path: /etc/resolv.conf
+      register: resolv_conf
+
+    - name: Buscando os servidores DNS encontrado
+      shell: "grep -Po '(?<=nameserver\\s)(.*)' /etc/resolv.conf"
+      register: dns_servers
+      when: resolv_conf.stat.exists == True and inet4_type.stdout_lines[0] == "static"
+    
+    - name: Adicionando arquivo configuração de rede
+      template:
+        dest: /etc/systemd/network/{{ ansible_default_ipv4.interface }}.network
+        src: interface.network.j2
+    
+    - name: Habilitando o Systemd Networkd
+      systemd:
+        name: systemd-networkd
+        state: started
+        enabled: true
+    
+    - name: Carregando as configurações
+      shell: |
+        networkctl reload;
+        networkctl reconfigure {{ ansible_default_ipv4.interface }}
+
+    - name: Recarregando servidores DNS
+      template:
+        dest: /etc/resolv.conf
+        src: resolv.conf.j2
+        
+    - name: Desabilitando o Networking
+      systemd:
+        name: networking
+        enabled: false
+    

@@ -1,0 +1,5 @@
+{% if dns_servers.stdout_lines != "" %}
+nameserver{% for dns in dns_servers.stdout_lines %} {{ dns }}{% endfor %}
+{% else %}
+nameserver 8.8.8.8
+{% endif %}
